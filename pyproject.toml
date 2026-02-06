@@ -1,0 +1,72 @@
+[project]
+name = "bose-product-engine"
+version = "0.1.0"
+description = "Zero-hallucination product search system for Bose professional audio equipment"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Bose Professional" }
+]
+
+dependencies = [
+    "docling>=2.0.0",              # Local PDF extraction
+    "pandas>=2.0.0",               # Data manipulation
+    "asyncpg>=0.29.0",             # Async PostgreSQL (NOT psycopg2)
+    "httpx>=0.25.0",               # Ollama API client
+    "pydantic>=2.0.0",             # Data validation
+    "pydantic-settings>=2.0.0",    # Config management
+    "numpy>=1.24.0",               # Vector operations
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+server = [
+    "fastmcp>=0.1.0",              # MCP server framework
+    "uvicorn>=0.24.0",             # ASGI server
+]
+
+[project.scripts]
+bose-etl = "src.etl.pipeline:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+]
+ignore = ["E501"]  # line length handled by black
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = "test_*.py"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true

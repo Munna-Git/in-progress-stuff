@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: bose_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bose_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_dev_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-bose_products}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bose_admin} -d ${POSTGRES_DB:-bose_products}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bose_network
+    restart: unless-stopped
+    # Memory limits for 16GB RAM laptop
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  bose_network:
+    driver: bridge
