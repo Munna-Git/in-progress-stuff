@@ -1,0 +1,190 @@
+{
+    "version": "1.0",
+    "description": "Golden test set for Bose Product Engine accuracy evaluation",
+    "test_cases": [
+        {
+            "id": "direct_01",
+            "category": "direct_lookup",
+            "query": "What's the power of AM10/60?",
+            "expected_model": "AM10/60",
+            "expected_fields": [
+                "power_watts"
+            ],
+            "notes": "Basic direct lookup test"
+        },
+        {
+            "id": "direct_02",
+            "category": "direct_lookup",
+            "query": "Show me the specs for DM3SE",
+            "expected_model": "DM3SE",
+            "expected_fields": [
+                "power_watts",
+                "freq_min_hz",
+                "impedance_ohms"
+            ],
+            "notes": "DesignMax speaker lookup"
+        },
+        {
+            "id": "direct_03",
+            "category": "direct_lookup",
+            "query": "What's the frequency response of IZA 250-LZ?",
+            "expected_model": "IZA 250-LZ",
+            "expected_fields": [
+                "freq_min_hz",
+                "freq_max_hz"
+            ],
+            "notes": "Amplifier frequency response"
+        },
+        {
+            "id": "direct_04",
+            "category": "direct_lookup",
+            "query": "FS2SE specifications",
+            "expected_model": "FS2SE",
+            "expected_fields": [
+                "power_watts"
+            ],
+            "notes": "FreeSpace speaker lookup"
+        },
+        {
+            "id": "semantic_01",
+            "category": "semantic_search",
+            "query": "Find 70V ceiling speakers for conference rooms",
+            "expected_category": "loudspeaker",
+            "expected_voltage": "70V",
+            "min_results": 1,
+            "notes": "Semantic search with voltage filter"
+        },
+        {
+            "id": "semantic_02",
+            "category": "semantic_search",
+            "query": "What outdoor speakers do you have?",
+            "expected_environmental": "outdoor",
+            "min_results": 1,
+            "notes": "Environmental rating search"
+        },
+        {
+            "id": "semantic_03",
+            "category": "semantic_search",
+            "query": "Recommend amplifiers over 250 watts",
+            "expected_category": "amplifier",
+            "min_watts": 250,
+            "min_results": 1,
+            "notes": "Power threshold search"
+        },
+        {
+            "id": "semantic_04",
+            "category": "semantic_search",
+            "query": "DesignMax speakers for retail",
+            "expected_series": "DesignMax",
+            "min_results": 1,
+            "notes": "Series-specific search"
+        },
+        {
+            "id": "semantic_05",
+            "category": "semantic_search",
+            "query": "Arena speakers for live events",
+            "expected_series": "ArenaMatch",
+            "min_results": 1,
+            "notes": "Semantic match to ArenaMatch"
+        },
+        {
+            "id": "calc_01",
+            "category": "calculation",
+            "query": "Can I connect 4 speakers at 30W each to a 150W transformer?",
+            "expected_result": {
+                "compatible": true,
+                "total_load": 120,
+                "capacity": 150
+            },
+            "notes": "Basic 70V compatibility check - should pass"
+        },
+        {
+            "id": "calc_02",
+            "category": "calculation",
+            "query": "Can I connect 6 x 30W speakers to 150W transformer?",
+            "expected_result": {
+                "compatible": false,
+                "total_load": 180,
+                "capacity": 150
+            },
+            "notes": "Basic 70V compatibility check - should fail"
+        },
+        {
+            "id": "calc_03",
+            "category": "calculation",
+            "query": "Calculate impedance of 3 x 8 ohm speakers in parallel",
+            "expected_result": {
+                "total_impedance": 2.67,
+                "connection": "parallel"
+            },
+            "notes": "Parallel impedance calculation"
+        },
+        {
+            "id": "calc_04",
+            "category": "calculation",
+            "query": "What's the total impedance of 4 ohm and 8 ohm speakers in series?",
+            "expected_result": {
+                "total_impedance": 12.0,
+                "connection": "series"
+            },
+            "notes": "Series impedance calculation"
+        },
+        {
+            "id": "calc_05",
+            "category": "calculation",
+            "query": "What transformer do I need for 200W of speakers?",
+            "expected_result": {
+                "recommended_watts": 250
+            },
+            "notes": "Transformer recommendation with 20% headroom"
+        },
+        {
+            "id": "edge_01",
+            "category": "edge_case",
+            "query": "AM10/60/80 power handling",
+            "notes": "Model range that should be exploded to individual models",
+            "expected_behavior": "Should find AM10/60 or AM10/80"
+        },
+        {
+            "id": "edge_02",
+            "category": "edge_case",
+            "query": "What's the wattage of a nonexistent model XYZ123?",
+            "expected_behavior": "Should gracefully handle missing product",
+            "expected_contains": [
+                "not found",
+                "couldn't find"
+            ]
+        },
+        {
+            "id": "edge_03",
+            "category": "edge_case",
+            "query": "",
+            "expected_behavior": "Should handle empty query gracefully"
+        },
+        {
+            "id": "complex_01",
+            "category": "complex",
+            "query": "Compare power handling of AM10/60 vs AM20/60",
+            "expected_models": [
+                "AM10/60",
+                "AM20/60"
+            ],
+            "notes": "Multi-model comparison"
+        },
+        {
+            "id": "complex_02",
+            "category": "complex",
+            "query": "What 70V speakers work with a 300W PowerSpace amplifier?",
+            "expected_voltage": "70V",
+            "min_results": 1,
+            "notes": "Cross-category query"
+        },
+        {
+            "id": "citation_01",
+            "category": "citation",
+            "query": "What's the sensitivity of EM90?",
+            "expected_citations": true,
+            "notes": "Answer should include citation with PDF source"
+        }
+    ]
+}
