@@ -39,6 +39,7 @@ class ETLPipeline:
         pdf_dir: Optional[Path] = None,
         skip_synthesis: bool = False,
         create_vector_index: bool = True,
+        force_refresh: bool = False,
     ):
         """
         Initialize the ETL pipeline.
@@ -47,10 +48,12 @@ class ETLPipeline:
             pdf_dir: Directory containing PDF files
             skip_synthesis: Skip AI summary generation
             create_vector_index: Create IVFFlat index after loading
+            force_refresh: Skip cache and re-extract from PDFs
         """
         self.pdf_dir = pdf_dir or settings.raw_pdfs_path
         self.skip_synthesis = skip_synthesis
         self.create_vector_index = create_vector_index
+        self.force_refresh = force_refresh
         
         self.job_id = str(uuid.uuid4())
         self.start_time: Optional[float] = None
@@ -128,7 +131,13 @@ class ETLPipeline:
         stage_start = time.time()
         
         extractor = PDFExtractor()
-        results = await extractor.extract_all(self.pdf_dir)
+        
+        # Clear cache if force refresh
+        if self.force_refresh:
+            logger.info("Force refresh enabled - clearing extraction cache")
+            extractor.clear_cache()
+        
+        results = await extractor.extract_all(self.pdf_dir, force_refresh=self.force_refresh)
         
         # Save raw tables
         extractor.save_raw_tables(results)
@@ -320,6 +329,16 @@ async def main():
         help="Skip vector index creation",
     )
     parser.add_argument(
+        "--force-refresh",
+        action="store_true",
+        help="Skip cache and re-extract all PDFs",
+    )
+    parser.add_argument(
+        "--clear-cache",
+        action="store_true",
+        help="Clear all cache files and exit",
+    )
+    parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         default="INFO",
@@ -337,11 +356,20 @@ async def main():
     # Ensure directories exist
     settings.ensure_directories()
     
+    # Handle cache clearing
+    if args.clear_cache:
+        from src.etl.extractor import PDFExtractor
+        extractor = PDFExtractor()
+        extractor.clear_cache()
+        print("Cache cleared successfully")
+        return 0
+    
     # Run pipeline
     pipeline = ETLPipeline(
         pdf_dir=args.pdf_dir,
         skip_synthesis=args.skip_synthesis,
         create_vector_index=not args.no_vector_index,
+        force_refresh=args.force_refresh,
     )
     
     try:
