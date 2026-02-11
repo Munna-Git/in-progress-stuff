@@ -38,6 +38,8 @@ class NormalizedProduct:
             "pdf_source": self.pdf_source,
             "page_number": self.page_number,
             "raw_text": self.raw_text,
+            "watts_int": self.watts_int,
+            "ohms_int": self.ohms_int,
         }
 
 

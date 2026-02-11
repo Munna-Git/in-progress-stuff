@@ -25,7 +25,7 @@ class EmbeddingClient:
         self,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
-        dimension: int = 384,
+        dimension: int = 1024,
     ):
         """Initialize embedding client."""
         self.base_url = (base_url or settings.ollama_base_url).rstrip('/')
@@ -334,6 +334,8 @@ class ProductLoader:
                     pdf_source = $5,
                     page_number = $6,
                     raw_text = $7,
+                    watts_int = $8,
+                    ohms_int = $9,
                     updated_at = NOW()
                 WHERE model_name = $1
                 """,
@@ -344,6 +346,8 @@ class ProductLoader:
                 product.get('pdf_source'),
                 product.get('page_number'),
                 product.get('raw_text'),
+                product.get('watts_int'),
+                product.get('ohms_int'),
             )
             return "updated"
         else:
@@ -352,8 +356,9 @@ class ProductLoader:
                 """
                 INSERT INTO products (
                     model_name, specs, ai_summary, embedding,
-                    pdf_source, page_number, raw_text
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    pdf_source, page_number, raw_text,
+                    watts_int, ohms_int
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 """,
                 model_name,
                 json.dumps(specs),
@@ -362,6 +367,8 @@ class ProductLoader:
                 product.get('pdf_source'),
                 product.get('page_number'),
                 product.get('raw_text'),
+                product.get('watts_int'),
+                product.get('ohms_int'),
             )
             return "inserted"
     

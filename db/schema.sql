@@ -47,9 +47,9 @@ CREATE TABLE IF NOT EXISTS products (
     ) STORED,
     
     -- ===========================================
-    -- VECTOR EMBEDDING (384 dims = Ollama bge-m3)
+    -- VECTOR EMBEDDING (1024 dims = Ollama bge-m3)
     -- ===========================================
-    embedding vector(384),
+    embedding vector(1024),
     
     -- ===========================================
     -- METADATA
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS embedding_cache (
     id SERIAL PRIMARY KEY,
     text_hash TEXT UNIQUE NOT NULL,
     text_content TEXT NOT NULL,
-    embedding vector(384) NOT NULL,
+    embedding vector(1024) NOT NULL,
     model_name TEXT DEFAULT 'bge-m3',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
