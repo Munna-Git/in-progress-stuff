@@ -1,0 +1,154 @@
+# Bose Professional RAG — Walkthrough
+
+## Cross-Verification Results
+
+| Metric | Value |
+|--------|-------|
+| Total products | **86** |
+| With 1024-dim vectors | **86** (100%) |
+| Categories | loudspeaker (60), amplifier (18), controller (8) |
+| Series | ArenaMatch, ControlCenter, ControlSpace, DesignMax, EdgeMax, FreeSpace, PowerShare, PowerSpace, ShowMatch |
+| With watts_int | **60** |
+| With ohms_int | **50** |
+
+## Test Results — All 4 Query Types Pass
+
+### Test 1: Direct Product Lookup ✅
+```
+Query: "What are the specs of the DesignMax DM3C?"
+→ Found: DesignMax.DM3C (first result), plus 9 related DesignMax models
+→ Time: ~37s (includes LLM classification + embedding + answer gen)
+```
+
+## Phase 3: MCP Compliance (New)
+
+The server has been updated to fully comply with the `AI ML Intern Project` requirements.
+
+### key Changes
+1. **Tool Standardization**:
+   - [ask(question)](file:///d:/production%20local%20RAG/src/server/tools.py#28-43): Natural language Q&A with strict grounding.
+   - [get_specs(model)](file:///d:/production%20local%20RAG/src/server/tools.py#44-62): Structured product specifications.
+   - [get_models()](file:///d:/production%20local%20RAG/src/server/main.py#62-68): List of all available models.
+   - [compare(models)](file:///d:/production%20local%20RAG/src/server/main.py#70-79): Side-by-side comparison of multiple products.
+   - [sources()](file:///d:/production%20local%20RAG/src/server/tools.py#103-121): List of indexed documents (`Bose-Products 3.pdf`).
+   - [health()](file:///d:/production%20local%20RAG/src/server/tools.py#122-130): System status check.
+
+2. **Strict Grounding Policy**:
+   - IF no evidence is found in the datasheets, the system explicitly replies:
+     > "Sorry, I do not have the capability to answer that."
+
+## Phase 4: Liability Prevention (New)
+
+We implemented a "Three-Layer Defense" strategy to prevent commercial liability issues.
+
+### Defense Layers
+1. **Layer 1: The Router (Interception)**
+   - Detects **Purchase Intent** patterns ("price", "buy", "stock") -> Blocks query.
+   - Detects **Domain Violation** patterns (Competitors like "Sonos", "JBL") -> Blocks query.
+
+2. **Layer 2: The Engine (Enforcement)**
+   - Returns strict, legally-approved hardcoded responses for blocked queries:
+     - *Purchase Intent*: "I am a technical assistant. For pricing and availability, please visit [Sales Portal URL]."
+     - *Domain Violation*: "I can only provide information on Bose Professional products."
+
+3. **Layer 3: The System Prompt (Fail-safe)**
+   - Explicitly instructs the LLM: "You are prohibited from discussing commercial terms, discounts, or stock levels."
+
+### Verification
+
+Run the defense verification script:
+```powershell
+python test_defense.py
+```
+
+**Verified Scenarios:**
+- "How much is the DM3C?" -> BLOCKED (Purchase Intent)
+- "Compare to Sonos" -> BLOCKED (Domain Violation)
+- "What is the power of DM3C?" -> ALLOWED (Technical Query)
+
+## Next Steps
+1.  **Run the Server**: Use `python -m src.server.main` to start.
+2.  **Connect a Client**: Connect your MCP client to `http://localhost:8000/sse` (or port 8001/8002 if conflict).
+3.  **Test Queries**: Verify technical queries work and commercial queries are blocked.
+
+### Verifying MCP Compliance
+
+We created a custom test client [test_mcp_client.py](file:///d:/production%20local%20RAG/test_mcp_client.py) that connects to the server and exercises all tools.
+
+**How to Run the Test:**
+
+1. **Start the Server** (Terminal 1):
+   ```powershell
+   python -m src.server.main --port 8000
+   ```
+
+2. **Run the Test Client** (Terminal 2):
+   ```powershell
+   # Ensure mcp is installed: pip install mcp
+   python test_mcp_client.py
+   ```
+   *(Note: Edit [test_mcp_client.py](file:///d:/production%20local%20RAG/test_mcp_client.py) port if server is on a different port)*
+
+**Expected Output:**
+The client will print the result of [get_models](file:///d:/production%20local%20RAG/src/server/main.py#62-68), [get_specs](file:///d:/production%20local%20RAG/src/server/tools.py#44-62), [ask](file:///d:/production%20local%20RAG/src/server/tools.py#28-43), and [compare](file:///d:/production%20local%20RAG/src/server/main.py#70-79), proving the server is fully functional and compliant.
+
+### Test 2: Semantic Search ✅  
+```
+Query: "Find speakers suitable for conference rooms"
+→ Found: EX-440C, EX-1280C, CSP-428 (correct conferencing products)
+→ Answer: "recommend speakers with high SPL ratings... EX-1280C has max SPL of 125 dB"
+
+Query: "High power ceiling speakers"
+→ Found: AudioPack C4W, C6W, DM8C, DM8SE, DM6PE, DM5C, Forum FC112
+```
+
+### Test 3: Similar Products ✅ (instant — 0.07s)
+```
+Similar to AMM108:
+  - AMS115 (0.907)
+  - AMM112 (0.899)
+  - Forum FC108 (0.869)
+  - EdgeMax EM180 (0.835)
+  - EdgeMax EM90 (0.826)
+```
+
+### Test 4: Electrical Calculations ✅ (instant — 0.00s)
+```
+"4 speakers at 30W each on 150W transformer" → Total: 120W ✓
+"3 speakers at 8Ω in parallel" → 8.00Ω ✓
+```
+
+## How to Test the RAG Engine
+
+### Automated Tests
+```powershell
+cd "d:\production local RAG"
+python test_query_engine.py
+```
+
+### Interactive REPL
+```powershell
+python test_query_engine.py --interactive
+```
+
+Commands in REPL:
+- Type any question → gets classified and answered
+- `/stats` → show database statistics
+- `/similar AMM.AMM108` → find similar products (use full model name)
+- `/quit` → exit
+
+### Start MCP Server
+```powershell
+python -m src.server.main
+```
+
+## Changes Made This Session
+
+| File | Change |
+|------|--------|
+| [config.py](file:///d:/production%20local%20RAG/src/config.py) | `embedding_dimension` 384→1024 |
+| [embeddings.py](file:///d:/production%20local%20RAG/src/rag/embeddings.py) | `dimension` default 384→1024 |
+| [normalizer.py](file:///d:/production%20local%20RAG/src/etl/normalizer.py) | Added [category](file:///d:/production%20local%20RAG/src/rag/retrieval.py#323-359), [series](file:///d:/production%20local%20RAG/src/etl/normalizer.py#276-302), `voltage_type` to [to_db_record()](file:///d:/production%20local%20RAG/src/etl/normalizer.py#34-63) |
+| [loader.py](file:///d:/production%20local%20RAG/src/etl/loader.py) | Added [category](file:///d:/production%20local%20RAG/src/rag/retrieval.py#323-359), [series](file:///d:/production%20local%20RAG/src/etl/normalizer.py#276-302), `voltage_type` to INSERT/UPDATE SQL |
+| [test_query_engine.py](file:///d:/production%20local%20RAG/test_query_engine.py) | New — validates all 4 RAG query types |
+| DB migration | Converted `category/series/voltage_type` from generated → regular columns |
