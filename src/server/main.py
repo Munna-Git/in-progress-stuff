@@ -29,123 +29,77 @@ def create_server():
     
     # Initialize server
     mcp = FastMCP(
-        name="bose-product-engine",
-        description="Zero-hallucination product search for Bose professional audio equipment",
+        "bose-product-engine"
     )
     
     # Initialize tools
     tools = BoseProductTools()
     
-    # Register query tool
+    # Register ask tool
     @mcp.tool()
-    async def query_products(query: str) -> dict:
+    async def ask(question: str) -> dict:
         """
-        Query the Bose product database with natural language.
-        
-        Handles direct lookups, semantic search, and calculations.
+        Ask a question about Bose products.
         
         Args:
-            query: Natural language query about Bose products
+            question: Natural language question about Bose products
         """
-        return await tools.query_products(query)
+        return await tools.ask(question)
     
-    # Register product lookup
+    # Register get_specs tool
     @mcp.tool()
-    async def get_product(model_name: str) -> dict:
+    async def get_specs(model: str) -> dict:
         """
         Get specifications for a specific Bose product.
         
         Args:
-            model_name: Product model (e.g., "AM10/60", "DM3SE", "IZA 250-LZ")
+            model: Product model (e.g., "AM10/60", "DM3SE")
         """
-        result = await tools.get_product_specs(model_name)
-        return result or {"error": f"Product '{model_name}' not found"}
-    
-    # Register search
+        result = await tools.get_specs(model)
+        return result or {"error": f"Product '{model}' not found"}
+
+    # Register get_models tool
     @mcp.tool()
-    async def search_products(
-        query: str,
-        min_watts: Optional[int] = None,
-        voltage_type: Optional[str] = None,
-        category: Optional[str] = None,
-        limit: int = 10,
-    ) -> list:
+    async def get_models() -> list:
         """
-        Search for Bose products with filters.
+        Get a list of all available product models.
+        """
+        return await tools.get_models()
+
+    # Register compare tool
+    @mcp.tool()
+    async def compare(models: list[str]) -> dict:
+        """
+        Compare specifications of multiple products side-by-side.
         
         Args:
-            query: Search query
-            min_watts: Minimum power requirement
-            voltage_type: "70V", "100V", or "Low-Z"
-            category: "loudspeaker", "amplifier", "controller"
-            limit: Max results (default 10)
+            models: List of model names to compare
         """
-        return await tools.search_products(
-            query=query,
-            min_watts=min_watts,
-            voltage_type=voltage_type,
-            category=category,
-            limit=limit,
-        )
-    
-    # Register similarity search
+        return await tools.compare(models)
+
+    # Register sources tool
     @mcp.tool()
-    async def find_similar(model_name: str, limit: int = 5) -> list:
+    async def sources() -> list:
         """
-        Find products similar to a given model.
-        
-        Args:
-            model_name: Reference product model
-            limit: Max results (default 5)
+        Get list of available source documents.
         """
-        return await tools.find_similar_products(model_name, limit)
-    
-    # Register 70V compatibility check
+        return await tools.sources()
+
+    # Register health tool
     @mcp.tool()
-    def check_70v_compatibility(
-        speaker_watts: list[int],
-        transformer_watts: int,
-    ) -> dict:
+    async def health() -> dict:
         """
-        Check if speakers are compatible with a 70V transformer.
-        
-        Args:
-            speaker_watts: List of speaker wattages
-            transformer_watts: Transformer capacity
+        Check system health.
         """
-        return tools.verify_70v_compatibility(speaker_watts, transformer_watts)
+        return await tools.health()
     
-    # Register impedance calculator
-    @mcp.tool()
-    def calculate_impedance(
-        impedances: list[float],
-        connection: str,
-    ) -> dict:
-        """
-        Calculate total impedance for series or parallel speakers.
-        
-        Args:
-            impedances: List of impedances in ohms
-            connection: "series" or "parallel"
-        """
-        return tools.calculate_impedance(impedances, connection)
-    
-    # Register transformer recommendation
-    @mcp.tool()
-    def recommend_transformer(total_watts: int) -> dict:
-        """
-        Recommend transformer size for speaker load.
-        
-        Args:
-            total_watts: Total speaker wattage
-        """
-        return tools.recommend_transformer(total_watts)
+
     
     logger.info("FastMCP server created with Bose product tools")
     return mcp
 
 
-def run_server(host: str = "0.0.0.0", port: int = 8000):
+async def run_server(host: str = "0.0.0.0", port: int = 8000):
     """
     Run the MCP server.
     
@@ -157,13 +111,8 @@ def run_server(host: str = "0.0.0.0", port: int = 8000):
     
     logger.info(f"Starting Bose Product Engine MCP server on {host}:{port}")
     
-    # Run with uvicorn
-    try:
-        import uvicorn
-        uvicorn.run(mcp.app, host=host, port=port)
-    except ImportError:
-        logger.error("uvicorn not installed. Install with: pip install uvicorn")
-        raise
+    # Run with FastMCP's built-in async runner
+    await mcp.run_http_async(host=host, port=port, transport='sse')
 
 
 async def main():
@@ -200,7 +149,7 @@ async def main():
     )
     
     # Run server
-    run_server(args.host, args.port)
+    await run_server(args.host, args.port)
 
 
 if __name__ == "__main__":

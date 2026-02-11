@@ -56,7 +56,7 @@ class AnswerGenerator:
 Answer the user's question using ONLY the product data provided below.
 Do NOT make up any specifications or information not in the data.
 Be concise and factual.
-If the answer is not in the data, say "I don't have that information."
+If the answer is not in the data, say "Sorry, I do not have the capability to answer that."
 
 User Question: {query}
 
@@ -195,7 +195,7 @@ Answer:"""
         """
         if not results:
             return GeneratedAnswer(
-                answer="I couldn't find any products matching your criteria.",
+                answer="Sorry, I do not have the capability to answer that.",
                 citations=[],
                 confidence=0.0,
                 query_type="semantic_search",
@@ -366,8 +366,7 @@ Answer:"""
         product_list = ", ".join(r.model_name for r in results[:5])
         
         return GeneratedAnswer(
-            answer=f"Based on your query, here are relevant products: {product_list}. "
-                   f"Please ask about specific models for detailed specifications.",
+            answer="Sorry, I do not have the capability to answer that.",
             citations=[],
             confidence=0.5,
             query_type="semantic_search",

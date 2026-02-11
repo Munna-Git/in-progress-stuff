@@ -401,3 +401,16 @@ class HybridRetriever:
         stats['by_category'] = {row['category']: row['count'] for row in rows}
         
         return stats
+
+    async def get_all_models(self) -> list[str]:
+        """
+        Get all model names from the database.
+        
+        Returns:
+            List of model names sorted alphabetically
+        """
+        db = await get_db()
+        rows = await db.fetch(
+            "SELECT model_name FROM products ORDER BY model_name"
+        )
+        return [row['model_name'] for row in rows]

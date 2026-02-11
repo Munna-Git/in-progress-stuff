@@ -25,45 +25,108 @@ class BoseProductTools:
         self.engine = QueryEngine()
         self.calculator = ElectricalCalculator()
     
-    async def query_products(
+    async def ask(
         self,
-        query: str,
+        question: str,
     ) -> dict[str, Any]:
         """
-        Query the Bose product database with natural language.
-        
-        Supports:
-        - Direct lookups: "What's the power of AM10/60?"
-        - Semantic search: "Find 70V speakers for conference rooms"
-        - Calculations: "Can I connect 4x30W speakers to 150W transformer?"
+        Ask a question about Bose products.
         
         Args:
-            query: Natural language query
+            question: Natural language question
             
         Returns:
             Answer with citations and confidence score
         """
-        result = await self.engine.query(query)
+        result = await self.engine.query(question)
         return result.to_dict()
     
-    async def get_product_specs(
+    async def get_specs(
         self,
-        model_name: str,
+        model: str,
     ) -> Optional[dict[str, Any]]:
         """
         Get specifications for a specific product model.
         
         Args:
-            model_name: Product model name (e.g., "AM10/60", "DM3SE")
+            model: Product model name (e.g., "AM10/60", "DM3SE")
             
         Returns:
             Product specifications or None if not found
         """
-        result = await self.engine.get_product(model_name)
+        result = await self.engine.get_product(model)
         
         if result:
             return result.to_dict()
         return None
+
+    async def get_models(self) -> list[str]:
+        """
+        Get a list of all available product models.
+        
+        Returns:
+            List of model names
+        """
+        # Efficiently fetch all model names via SQL
+        models = await self.engine.retriever.get_all_models()
+        return models
+
+    async def compare(self, models: list[str]) -> dict[str, Any]:
+        """
+        Compare specifications of multiple products side-by-side.
+        
+        Args:
+            models: List of model names to compare
+            
+        Returns:
+            Comparison dictionary with common specs
+        """
+        metrics = [
+            "power_watts", "impedance_ohms", "freq_min_hz", "freq_max_hz",
+            "sensitivity_db", "coverage", "weight_kg"
+        ]
+        
+        comparison = {}
+        for model in models:
+            product = await self.engine.get_product(model)
+            if product:
+                specs = product.specs
+                product_data = {"model": product.model_name}
+                for metric in metrics:
+                    product_data[metric] = specs.get(metric, "N/A")
+                comparison[model] = product_data
+            else:
+                comparison[model] = "Product not found"
+                
+        return comparison
+
+    async def sources(self) -> list[dict[str, Any]]:
+        """
+        Get list of available source documents.
+        
+        Returns:
+            List of source documents with metadata
+        """
+        # For now, return the static list of PDFs we processed
+        # Ideally this would come from a distinct query or metadata table
+        return [
+            {
+                "id": "bose_catalog_v1",
+                "title": "Bose Professional Product Catalog",
+                "filename": "Bose-Products 3.pdf",
+                "updated": "2024-01-01",
+                "type": "pdf"
+            }
+        ]
+
+    async def health(self) -> dict[str, str]:
+        """
+        Check system health.
+        
+        Returns:
+            Health status
+        """
+        return {"status": "healthy", "version": "1.0.0"}
     
     async def search_products(
         self,
