@@ -20,6 +20,8 @@ class QueryType(Enum):
     DIRECT_LOOKUP = "direct_lookup"      # "What's the power of AM10/60?"
     SEMANTIC_SEARCH = "semantic_search"  # "Find ceiling speakers for conference rooms"
     CALCULATION = "calculation"          # "Can I connect 8 speakers to 70V?"
+    PURCHASE_INTENT = "purchase_intent"  # "How much is it?"
+    DOMAIN_VIOLATION = "domain_violation" # "Compare to Sonos"
     UNKNOWN = "unknown"
 
 
@@ -62,6 +64,36 @@ class QueryRouter:
         r"which .* should",
         r"suitable for",
         r"good for",
+    ]
+
+    # Purchase intent patterns
+    PURCHASE_INTENT_PATTERNS = [
+        r"price",
+        r"cost",
+        r"how much",
+        r"buy",
+        r"purchase",
+        r"stock",
+        r"availability",
+        r"where to get",
+        r"ordering",
+        r"quote",
+        r"discount",
+        r"deal",
+        r"sale",
+    ]
+
+    # Domain violation patterns (Competitors)
+    DOMAIN_VIOLATION_PATTERNS = [
+        r"sonos",
+        r"jbl",
+        r"yamaha",
+        r"qsc",
+        r"crestron",
+        r"extron",
+        r"biamp",
+        r"crown",
+        r"lab.gruppen",
     ]
     
     # LLM classification prompt
@@ -202,6 +234,16 @@ Respond with ONLY one word: DIRECT_LOOKUP, SEMANTIC_SEARCH, or CALCULATION"""
             return QueryType.UNKNOWN
         
         query = query.strip()
+        
+        # Layer 1 Check: Purchase Intent
+        if self._check_purchase_intent(query):
+            logger.info(f"Purchase intent detected: {query}")
+            return QueryType.PURCHASE_INTENT
+            
+        # Layer 1 Check: Domain Violation
+        if self._check_domain_violation(query):
+            logger.info(f"Domain violation detected: {query}")
+            return QueryType.DOMAIN_VIOLATION
         
         # Try rule-based classification first (fast)
         rule_result = self._rule_based_classify(query)
@@ -347,6 +389,22 @@ Respond with ONLY one word: DIRECT_LOOKUP, SEMANTIC_SEARCH, or CALCULATION"""
         
         return params
     
+    def _check_purchase_intent(self, query: str) -> bool:
+        """Check if query indicates purchase intent."""
+        query_lower = query.lower()
+        for pattern in self.PURCHASE_INTENT_PATTERNS:
+            if re.search(r'\b' + pattern + r'\b', query_lower, re.IGNORECASE):
+                return True
+        return False
+
+    def _check_domain_violation(self, query: str) -> bool:
+        """Check if query mentions competitor brands."""
+        query_lower = query.lower()
+        for pattern in self.DOMAIN_VIOLATION_PATTERNS:
+            if re.search(r'\b' + pattern + r'\b', query_lower, re.IGNORECASE):
+                return True
+        return False
+
     async def __aenter__(self):
         """Async context manager entry."""
         return self

@@ -64,6 +64,18 @@ class QueryEngine:
             elif query_type == QueryType.CALCULATION:
                 return await self._handle_calculation(user_query)
             
+            elif query_type == QueryType.PURCHASE_INTENT:
+                return GeneratedAnswer(
+                    answer="I am a technical assistant. For pricing and availability, please visit [Sales Portal URL].",
+                    query_type="purchase_intent",
+                )
+            
+            elif query_type == QueryType.DOMAIN_VIOLATION:
+                return GeneratedAnswer(
+                    answer="I can only provide information on Bose Professional products.",
+                    query_type="domain_violation",
+                )
+            
             elif query_type == QueryType.SEMANTIC_SEARCH:
                 return await self._handle_semantic_search(user_query)
             
