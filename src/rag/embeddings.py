@@ -32,7 +32,7 @@ class EmbeddingClient:
         self,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
-        dimension: int = 384,
+        dimension: int = 1024,
         cache_enabled: bool = True,
     ):
         """

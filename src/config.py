@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     ollama_base_url: str = Field(default="http://localhost:11434")
     ollama_embedding_model: str = Field(default="bge-m3")
     ollama_llm_model: str = Field(default="llama3.2:3b")
-    embedding_dimension: int = Field(default=384)
+    embedding_dimension: int = Field(default=1024)
     
     # ===========================================
     # ETL Settings

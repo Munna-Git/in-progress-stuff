@@ -328,18 +328,24 @@ class ProductLoader:
             await conn.execute(
                 """
                 UPDATE products SET
-                    specs = $2,
-                    ai_summary = $3,
-                    embedding = $4,
-                    pdf_source = $5,
-                    page_number = $6,
-                    raw_text = $7,
-                    watts_int = $8,
-                    ohms_int = $9,
+                    category = $2,
+                    series = $3,
+                    voltage_type = $4,
+                    specs = $5,
+                    ai_summary = $6,
+                    embedding = $7,
+                    pdf_source = $8,
+                    page_number = $9,
+                    raw_text = $10,
+                    watts_int = $11,
+                    ohms_int = $12,
                     updated_at = NOW()
                 WHERE model_name = $1
                 """,
                 model_name,
+                product.get('category'),
+                product.get('series'),
+                product.get('voltage_type'),
                 json.dumps(specs),
                 product.get('ai_summary'),
                 embedding,
@@ -355,12 +361,16 @@ class ProductLoader:
             await conn.execute(
                 """
                 INSERT INTO products (
-                    model_name, specs, ai_summary, embedding,
+                    model_name, category, series, voltage_type,
+                    specs, ai_summary, embedding,
                     pdf_source, page_number, raw_text,
                     watts_int, ohms_int
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 """,
                 model_name,
+                product.get('category'),
+                product.get('series'),
+                product.get('voltage_type'),
                 json.dumps(specs),
                 product.get('ai_summary'),
                 embedding,
