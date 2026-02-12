@@ -57,7 +57,7 @@ You are a technical support interface. You are prohibited from discussing commer
 Answer the user's question using ONLY the product data provided below.
 Do NOT make up any specifications or information not in the data.
 Be concise and factual.
-If the answer is not in the data, say "Sorry, I do not have the capability to answer that."
+If the answer is not in the data, say "I couldn't find that information in the provided product data."
 
 User Question: {query}
 
@@ -207,7 +207,7 @@ Answer:"""
         """
         if not results:
             return GeneratedAnswer(
-                answer="Sorry, I do not have the capability to answer that.",
+                answer="I couldn't find any relevant products to answer that query.",
                 citations=[],
                 confidence=0.0,
                 query_type="semantic_search",
@@ -359,9 +359,31 @@ Answer:"""
             products_used=[],
         )
     
+    
     def _format_products_for_llm(self, results: list[RetrievalResult]) -> str:
         """Format products for LLM prompt."""
         lines = []
+        
+        # Use same mappings as direct answer
+        spec_mappings = [
+            ('power_watts', 'Power', 'W', 'power_watts'),
+            ('Power Handling (Long-term)', 'Power', 'W', 'power_watts'),
+            ('freq_min_hz', 'Freq Min', 'Hz', 'freq_min_hz'),
+            ('freq_max_hz', 'Freq Max', 'Hz', 'freq_max_hz'),
+            ('Freq Response (-3 dB) Freq Range (-10 dB)', 'Freq Response', '', 'freq_response'),
+            ('impedance_ohms', 'Impedance', 'Ω', 'impedance_ohms'),
+            ('Nominal Impedance', 'Impedance', 'Ω', 'impedance_ohms'),
+            ('sensitivity_db', 'Sensitivity', 'dB', 'sensitivity_db'),
+            ('Sensitivity (SPL/1W@1m)', 'Sensitivity', 'dB', 'sensitivity_db'),
+            ('coverage', 'Coverage', '', 'coverage'),
+            ('Coverage (H × V, or Conical) 1 kHz - 4 kHz Average', 'Coverage', '', 'coverage'),
+            ('voltage_type', 'Voltage', '', 'voltage_type'),
+            ('driver_components', 'Drivers', '', 'driver_components'),
+            ('Driver Components', 'Drivers', '', 'driver_components'),
+            ('weight_kg', 'Weight', 'kg', 'weight_kg'),
+            ('color_options', 'Colors', '', 'color_options'),
+            ('environmental', 'Environmental', '', 'environmental'),
+        ]
         
         for i, result in enumerate(results[:5], 1):  # Limit to top 5
             lines.append(f"\n### Product {i}: {result.model_name}")
@@ -371,12 +393,13 @@ Answer:"""
             if result.series:
                 lines.append(f"  Series: {result.series}")
             
-            # Key specs
+            # Key specs using mappings
             specs = result.specs
-            for key in ['power_watts', 'voltage_type', 'freq_min_hz', 'freq_max_hz', 
-                       'impedance_ohms', 'coverage', 'driver_components']:
+            for key, label, unit, norm_key in spec_mappings:
                 if key in specs and specs[key]:
-                    lines.append(f"  {key}: {specs[key]}")
+                    val = specs[key]
+                    suffix = f" {unit}" if unit else ""
+                    lines.append(f"  {label}: {val}{suffix}")
             
             if result.ai_summary:
                 lines.append(f"  Summary: {result.ai_summary}")
