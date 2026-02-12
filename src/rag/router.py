@@ -40,6 +40,7 @@ class QueryRouter:
         r"(?:get|show|tell me) (?:the )?.* (?:for|of) (\w+[-/]?\w*)",
         r"(\w+[-/]\w+) (?:specs|specifications|details)",
         r"specs (?:for|of) (\w+[-/]?\w*)",
+        r"(\w+) (?:power|specs|frequency|impedance|sensitivity|coverage|weight)",
     ]
     
     CALCULATION_PATTERNS = [
@@ -272,14 +273,16 @@ Respond with ONLY one word: DIRECT_LOOKUP, SEMANTIC_SEARCH, or CALCULATION"""
         """
         # Bose model patterns
         patterns = [
-            r'\b(AM\d+/\d+)\b',          # AM10/60
-            r'\b(DM\d+S?E?)\b',           # DM3SE, DM8SE
-            r'\b(FS\d+S?E?)\b',           # FS2SE
-            r'\b(EM\d+)\b',               # EM90
-            r'\b(IZA\s*\d+-?\w*)\b',      # IZA 250-LZ
-            r'\b(P\d{4}[A-Z]?)\b',        # P4300A
-            r'\b(CC-\d+D?)\b',            # CC-1, CC-2D
-            r'\b(\d{3,4}B[LH])\b',        # 250BL, 1100BH
+            r'\b(AM\d+/\d+(?:/\d+)?)\b',   # AM10/60, AM10/60/80
+            r'\b(DM\d+[A-Z]*(?:-[A-Z]+)?)\b',  # DM3C, DM3SE, DM2C-LP, DM8C-SUB
+            r'\b(FS\d+[A-Z]*)\b',          # FS2SE, FS4SE
+            r'\b(EM\d+(?:-LP)?)\b',        # EM90, EM90-LP
+            r'\b(IZA\s*\d+-?\w*)\b',       # IZA 250-LZ
+            r'\b(PS[X]?\d{3,4}[A-Z]*)\b',  # PS404D, PSX1204D
+            r'\b(P\d{4}[A-Z]?)\b',         # P4300A
+            r'\b(CC-\d+D?)\b',             # CC-1, CC-2D
+            r'\b(\d{3,4}B[LH])\b',         # 250BL, 1100BH
+            r'\b(VB[\-]?[S1]?)\b',          # VB1, VB-S
         ]
         
         for pattern in patterns:

@@ -23,7 +23,7 @@ class EmbeddingClient:
     
     Features:
     - Async HTTP client with connection pooling
-    - In-memory caching for query embeddings
+    - Persistent disk caching for query embeddings
     - Batch embedding support
     - Health check functionality
     """
@@ -34,6 +34,7 @@ class EmbeddingClient:
         model: Optional[str] = None,
         dimension: int = 1024,
         cache_enabled: bool = True,
+        cache_path: Optional[Path] = None,
     ):
         """
         Initialize embedding client.
@@ -42,16 +43,43 @@ class EmbeddingClient:
             base_url: Ollama API base URL
             model: Embedding model name
             dimension: Expected embedding dimension
-            cache_enabled: Enable in-memory caching
+            cache_enabled: Enable caching (memory + disk)
+            cache_path: Path to disk cache file
         """
         self.base_url = (base_url or settings.ollama_base_url).rstrip('/')
         self.model = model or settings.ollama_embedding_model
         self.dimension = dimension
         self.cache_enabled = cache_enabled
+        self.cache_path = cache_path or settings.embeddings_cache
         
         self._client: Optional[httpx.AsyncClient] = None
         self._cache: dict[str, list[float]] = {}
+        
+        if self.cache_enabled:
+            self._load_cache()
     
+    def _load_cache(self) -> None:
+        """Load cache from disk."""
+        if self.cache_path and self.cache_path.exists():
+            try:
+                with open(self.cache_path, 'r', encoding='utf-8') as f:
+                    self._cache = json.load(f)
+                logger.info(f"Loaded {len(self._cache)} cached query embeddings")
+            except Exception as e:
+                logger.warning(f"Failed to load embedding cache: {e}")
+                self._cache = {}
+
+    def _save_cache(self) -> None:
+        """Save cache to disk."""
+        if self.cache_path:
+            try:
+                self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(self.cache_path, 'w', encoding='utf-8') as f:
+                    json.dump(self._cache, f)
+                logger.debug(f"Saved {len(self._cache)} embeddings to disk")
+            except Exception as e:
+                logger.warning(f"Failed to save embedding cache: {e}")
+
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client with connection pooling."""
         if self._client is None or self._client.is_closed:
@@ -63,22 +91,20 @@ class EmbeddingClient:
         return self._client
     
     async def close(self) -> None:
-        """Close the HTTP client."""
+        """Close the HTTP client and save cache."""
         if self._client and not self._client.is_closed:
             await self._client.aclose()
             self._client = None
+        
+        if self.cache_enabled:
+            self._save_cache()
     
     def _hash_text(self, text: str) -> str:
         """Generate cache key from text."""
         return hashlib.sha256(text.encode()).hexdigest()[:16]
     
     async def health_check(self) -> bool:
-        """
-        Check if Ollama is available and embedding model is loaded.
-        
-        Returns:
-            True if healthy, False otherwise
-        """
+        """Check if Ollama is available."""
         try:
             client = await self._get_client()
             response = await client.get("/api/tags")
@@ -88,8 +114,6 @@ class EmbeddingClient:
             
             data = response.json()
             models = [m['name'] for m in data.get('models', [])]
-            
-            # Check for model (with or without version tag)
             model_base = self.model.split(':')[0]
             return any(model_base in m for m in models)
             
@@ -98,15 +122,7 @@ class EmbeddingClient:
             return False
     
     async def embed(self, text: str) -> Optional[list[float]]:
-        """
-        Generate embedding for a single text.
-        
-        Args:
-            text: Text to embed
-            
-        Returns:
-            Embedding vector or None on failure
-        """
+        """Generate embedding with caching and logging."""
         if not text or not text.strip():
             return None
         
@@ -116,7 +132,10 @@ class EmbeddingClient:
         if self.cache_enabled:
             cache_key = self._hash_text(text)
             if cache_key in self._cache:
+                logger.info(f"Embedding cache HIT: '{text[:30]}...'") 
                 return self._cache[cache_key]
+        
+        logger.info(f"Embedding cache MISS - Generating: '{text[:30]}...'")
         
         try:
             client = await self._get_client()
@@ -144,6 +163,8 @@ class EmbeddingClient:
             # Cache result
             if self.cache_enabled:
                 self._cache[cache_key] = embedding
+                # Save immediately for interactive robustness
+                # self._save_cache() 
             
             return embedding
             
@@ -159,16 +180,7 @@ class EmbeddingClient:
         texts: list[str],
         concurrency: int = 5,
     ) -> list[Optional[list[float]]]:
-        """
-        Generate embeddings for multiple texts.
-        
-        Args:
-            texts: List of texts to embed
-            concurrency: Max concurrent requests
-            
-        Returns:
-            List of embeddings (None for failed items)
-        """
+        """Generate embeddings for multiple texts."""
         semaphore = asyncio.Semaphore(concurrency)
         
         async def embed_with_semaphore(text: str) -> Optional[list[float]]:
@@ -181,6 +193,11 @@ class EmbeddingClient:
     def clear_cache(self) -> None:
         """Clear the embedding cache."""
         self._cache.clear()
+        if self.cache_path and self.cache_path.exists():
+            try:
+                self.cache_path.unlink()
+            except Exception as e:
+                logger.warning(f"Failed to delete cache file: {e}")
     
     async def __aenter__(self):
         """Async context manager entry."""
@@ -204,14 +221,6 @@ async def get_embedding_client() -> EmbeddingClient:
 
 
 async def embed_query(query: str) -> Optional[list[float]]:
-    """
-    Convenience function to embed a query string.
-    
-    Args:
-        query: Query text to embed
-        
-    Returns:
-        Embedding vector or None
-    """
+    """Convenience function to embed a query string."""
     client = await get_embedding_client()
     return await client.embed(query)

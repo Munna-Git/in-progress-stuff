@@ -11,8 +11,8 @@ import logging
 # Fix Windows console encoding
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-# Configure logging (suppress INFO logs for cleaner output)
-logging.basicConfig(level=logging.WARNING)
+# Configure logging (allow INFO logs to see embedding status)
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 from src.rag.engine import get_engine
 

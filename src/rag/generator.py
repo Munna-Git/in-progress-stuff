@@ -363,15 +363,50 @@ Answer:"""
         return "\n".join(lines)
     
     def _fallback_answer(self, results: list[RetrievalResult]) -> GeneratedAnswer:
-        """Generate fallback answer without LLM."""
-        product_list = ", ".join(r.model_name for r in results[:5])
+        """Generate fallback answer without LLM — format specs directly."""
+        lines = []
+        citations = []
+        products_used = []
+        
+        for result in results[:5]:
+            products_used.append(result.model_name)
+            lines.append(f"\n**{result.model_name}**" + (f" ({result.category})" if result.category else ""))
+            
+            specs = result.specs
+            spec_mappings = [
+                ('power_watts', 'Power', 'W'),
+                ('freq_min_hz', 'Freq Min', 'Hz'),
+                ('freq_max_hz', 'Freq Max', 'Hz'),
+                ('impedance_ohms', 'Impedance', 'Ω'),
+                ('sensitivity_db', 'Sensitivity', 'dB'),
+                ('coverage', 'Coverage', ''),
+                ('voltage_type', 'Voltage', ''),
+                ('driver_components', 'Drivers', ''),
+            ]
+            
+            for key, label, unit in spec_mappings:
+                if key in specs and specs[key] is not None:
+                    value = specs[key]
+                    suffix = f" {unit}" if unit else ""
+                    lines.append(f"- {label}: {value}{suffix}")
+                    citations.append(Citation(
+                        model_name=result.model_name,
+                        field=key,
+                        value=value,
+                        pdf_source=result.pdf_source,
+                    ))
+            
+            if result.ai_summary:
+                lines.append(f"- Summary: {result.ai_summary}")
+        
+        answer_text = "\n".join(lines).strip()
         
         return GeneratedAnswer(
-            answer="Sorry, I do not have the capability to answer that.",
-            citations=[],
-            confidence=0.5,
+            answer=answer_text,
+            citations=citations,
+            confidence=0.7,
             query_type="semantic_search",
-            products_used=[r.model_name for r in results],
+            products_used=products_used,
         )
     
     async def __aenter__(self):
