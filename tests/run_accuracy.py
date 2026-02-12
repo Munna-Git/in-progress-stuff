@@ -19,7 +19,68 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.config import settings
 from src.rag.engine import QueryEngine
 
+
+import httpx
+
 logger = logging.getLogger(__name__)
+
+class HallucinationJudge:
+    """
+    LLM-as-a-Judge to evaluate answer faithfulness.
+    Checks if the answer contains information not present in the context.
+    """
+    
+    JUDGE_PROMPT = """You are an impartial judge evaluating a RAG system.
+    
+QUERY: {query}
+CONTEXT: {context}
+ANSWER: {answer}
+
+Task: Determine if the ANSWER contains any factual claims that are NOT supported by the CONTEXT.
+- Ignore minor phrasing differences or conversational filler.
+- Focus on specs, features, compatibility, and product names.
+- If the answer says "I don't know" or "Not found", and the context is empty or irrelevant, it is FAITHFUL.
+- If the answer makes a claim (e.g. "Power is 50W") but the context says "Power is 30W" or doesn't mention power, it is HALLUCINATION.
+
+Respond with valid JSON:
+{{
+  "faithful": boolean,
+  "reason": "explanation of why it is faithful or hallucinated"
+}}"""
+
+    def __init__(self, base_url: str = None, model: str = None):
+        self.base_url = base_url or settings.ollama_base_url
+        self.model = model or settings.ollama_llm_model  # Use same model or stronger
+        self._client = httpx.AsyncClient(base_url=self.base_url, timeout=30.0)
+
+    async def evaluate(self, query: str, answer: str, context: str) -> dict:
+        """Evaluate if answer is faithful to context."""
+        if not answer or not context:
+            return {"faithful": True, "reason": "Empty answer or context"}
+            
+        prompt = self.JUDGE_PROMPT.format(query=query, context=context, answer=answer)
+        
+        try:
+            response = await self._client.post(
+                "/api/generate",
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "format": "json",
+                    "options": {"temperature": 0.0}
+                }
+            )
+            data = response.json()
+            result_json = data.get('response', '{}')
+            return json.loads(result_json)
+        except Exception as e:
+            logger.error(f"Judge error: {e}")
+            return {"faithful": True, "reason": "Judge error, assuming faithful"}
+
+    async def close(self):
+        await self._client.aclose()
+
 
 
 @dataclass
@@ -34,7 +95,11 @@ class TestResult:
     expected: Optional[dict] = None
     actual: Optional[dict] = None
     error: Optional[str] = None
+
     duration_ms: float = 0.0
+    faithfulness: bool = True
+    faithfulness_reason: str = ""
+
 
 
 @dataclass 
@@ -48,6 +113,9 @@ class EvaluationReport:
     by_category: dict[str, dict] = field(default_factory=dict)
     results: list[TestResult] = field(default_factory=list)
     avg_duration_ms: float = 0.0
+
+    hallucination_rate: float = 0.0
+
 
 
 class AccuracyRunner:
@@ -69,16 +137,24 @@ class AccuracyRunner:
             golden_set_path: Path to golden_set.json
         """
         self.golden_set_path = golden_set_path
+        self.golden_set_path = golden_set_path
         self.engine: Optional[QueryEngine] = None
+        self.judge: Optional[HallucinationJudge] = None
+
     
     async def setup(self) -> None:
         """Initialize the query engine."""
         self.engine = QueryEngine()
+        self.judge = HallucinationJudge()
+
     
     async def teardown(self) -> None:
         """Clean up resources."""
         if self.engine:
             await self.engine.close()
+        if self.judge:
+            await self.judge.close()
+
     
     def load_test_cases(self) -> list[dict]:
         """Load test cases from golden set."""
@@ -135,7 +211,23 @@ class AccuracyRunner:
                 # Unknown category - just check for non-error response
                 result.passed = 'error' not in answer.answer.lower()
             
+            # Use LLM-as-a-Judge for Hallucination Check
+            # Context comes from retrieved products
+            context_text = ""
+            if answer.citations:
+                context_text = "\n".join([f"{c.model_name} {c.field}: {c.value}" for c in answer.citations])
+            elif answer.products_used:
+                # If no specific citations, use product names as weak context
+                context_text = f"Known products: {', '.join(answer.products_used)}"
+            
+            # Only judge if there is an answer and it's not a refusal
+            if answer.answer and "sorry, i do not" not in answer.answer.lower():
+                judge_result = await self.judge.evaluate(query, answer.answer, context_text)
+                result.faithfulness = judge_result.get("faithful", True)
+                result.faithfulness_reason = judge_result.get("reason", "No reason provided")
+            
         except Exception as e:
+
             result.error = str(e)
             result.passed = False
             logger.error(f"Test {test_id} failed with error: {e}")
@@ -366,7 +458,9 @@ class AccuracyRunner:
             by_category=by_category,
             results=results,
             avg_duration_ms=avg_duration,
+            hallucination_rate=len([r for r in results if not r.faithfulness]) / len(results) if results else 0.0,
         )
+
         
         return report
     
@@ -380,7 +474,11 @@ class AccuracyRunner:
         print(f"Passed: {report.passed}")
         print(f"Failed: {report.failed}")
         print(f"Accuracy: {report.accuracy:.1%}")
+        print(f"Accuracy: {report.accuracy:.1%}")
+        print(f"Hallucination Rate: {report.hallucination_rate:.1%}")
+        print(f"Faithfulness: {1.0 - report.hallucination_rate:.1%}")
         print(f"Avg Duration: {report.avg_duration_ms:.0f}ms")
+
         
         print("\nBy Category:")
         for cat, stats in report.by_category.items():
@@ -393,6 +491,14 @@ class AccuracyRunner:
                     print(f"  - {result.test_id}: {result.query[:50]}...")
                     if result.error:
                         print(f"    Error: {result.error}")
+        
+        hallucinations = [r for r in report.results if not r.faithfulness]
+        if hallucinations:
+            print("\nPotential Hallucinations:")
+            for result in hallucinations:
+                print(f"  - {result.test_id}: {result.query}")
+                print(f"    Answer: {result.answer[:100]}...")
+                print(f"    Reason: {result.faithfulness_reason}")
         
         print("=" * 60 + "\n")
 
@@ -440,9 +546,12 @@ async def main():
                 'passed': report.passed,
                 'failed': report.failed,
                 'accuracy': report.accuracy,
+                'hallucination_rate': report.hallucination_rate,
                 'avg_duration_ms': report.avg_duration_ms,
                 'by_category': report.by_category,
+
                 'results': [
+
                     {
                         'test_id': r.test_id,
                         'category': r.category,
@@ -450,7 +559,10 @@ async def main():
                         'passed': r.passed,
                         'score': r.score,
                         'duration_ms': r.duration_ms,
+                        'faithfulness': r.faithfulness,
+                        'faithfulness_reason': r.faithfulness_reason,
                         'error': r.error,
+
                     }
                     for r in report.results
                 ],

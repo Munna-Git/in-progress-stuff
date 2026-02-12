@@ -27,32 +27,17 @@ class NormalizedProduct:
     raw_text: str = ""
     watts_int: Optional[int] = None
     ohms_int: Optional[int] = None
+    voltage_type: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
 
     def to_db_record(self) -> dict:
-        # Detect voltage_type from specs
-        voltage_type = None
-        for key, val in self.specs.items():
-            val_str = str(val).lower()
-            if "70v" in val_str and "100v" in val_str:
-                voltage_type = "70V/100V"
-                break
-            elif "70v" in val_str:
-                voltage_type = "70V"
-                break
-            elif "100v" in val_str:
-                voltage_type = "100V"
-                break
-        if not voltage_type and self.ohms_int:
-            voltage_type = "Low-Z"
-
         return {
             "model_name": self.model_name,
             "category": self.category or None,
             "series": self.series or None,
-            "voltage_type": voltage_type,
+            "voltage_type": self.voltage_type,
             "specs": json.dumps(self.specs),
             "pdf_source": self.pdf_source,
             "page_number": self.page_number,
@@ -228,6 +213,7 @@ class ProductNormalizer:
                     raw_text=raw_text,
                     watts_int=watts_int,
                     ohms_int=ohms_int,
+                    voltage_type=self._extract_voltage_type(specs, ohms_int),
                 ))
 
         return products, exploded
@@ -264,6 +250,26 @@ class ProductNormalizer:
                 if match:
                     return int(match.group(1))
         return None
+
+    def _extract_voltage_type(self, specs: dict, ohms_int: Optional[int]) -> Optional[str]:
+        """Extract voltage type (70V/100V/Low-Z) from specs."""
+        voltage_type = None
+        for key, val in specs.items():
+            val_str = str(val).lower()
+            if "70v" in val_str and "100v" in val_str:
+                voltage_type = "70V/100V"
+                break
+            elif "70v" in val_str:
+                voltage_type = "70V"
+                break
+            elif "100v" in val_str:
+                voltage_type = "100V"
+                break
+        
+        if not voltage_type and ohms_int:
+            voltage_type = "Low-Z"
+            
+        return voltage_type
 
     def _detect_category(self, category_hint: str) -> str:
         """Detect product category from the page category hint."""

@@ -1,0 +1,36 @@
+{
+    "version": "1.0",
+    "description": "Small subset for quick evaluation",
+    "test_cases": [
+        {
+            "id": "direct_01",
+            "category": "direct_lookup",
+            "query": "What's the power of AM10/60?",
+            "expected_model": "AM10/60",
+            "expected_fields": [
+                "power_watts"
+            ],
+            "notes": "Basic direct lookup test"
+        },
+        {
+            "id": "semantic_01",
+            "category": "semantic_search",
+            "query": "Find 70V ceiling speakers for conference rooms",
+            "expected_category": "loudspeaker",
+            "expected_voltage": "70V",
+            "min_results": 1,
+            "notes": "Semantic search with voltage filter"
+        },
+        {
+            "id": "calc_01",
+            "category": "calculation",
+            "query": "Can I connect 4 speakers at 30W each to a 150W transformer?",
+            "expected_result": {
+                "compatible": true,
+                "total_load": 120,
+                "capacity": 150
+            },
+            "notes": "Basic 70V compatibility check"
+        }
+    ]
+}

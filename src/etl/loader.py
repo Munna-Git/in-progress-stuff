@@ -324,7 +324,7 @@ class ProductLoader:
         specs = product.get('specs', {})
         
         if existing:
-            # Update existing product
+            # Update existing product (COALESCE preserves existing ai_summary/embedding)
             await conn.execute(
                 """
                 UPDATE products SET
@@ -332,8 +332,8 @@ class ProductLoader:
                     series = $3,
                     voltage_type = $4,
                     specs = $5,
-                    ai_summary = $6,
-                    embedding = $7,
+                    ai_summary = COALESCE($6, ai_summary),
+                    embedding = COALESCE($7, embedding),
                     pdf_source = $8,
                     page_number = $9,
                     raw_text = $10,

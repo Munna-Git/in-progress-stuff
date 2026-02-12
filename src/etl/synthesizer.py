@@ -42,7 +42,7 @@ Summary:"""
         self,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
-        timeout: float = 30.0,
+        timeout: float = 60.0,
     ):
         """Initialize the Ollama synthesizer."""
         self.base_url = (base_url or settings.ollama_base_url).rstrip('/')
@@ -214,7 +214,7 @@ Summary:"""
     async def synthesize_batch(
         self,
         products: list[dict],
-        concurrency: int = 3,
+        concurrency: int = 1,
     ) -> list[dict]:
         """
         Generate summaries for a batch of products.

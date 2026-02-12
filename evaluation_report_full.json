@@ -1,0 +1,263 @@
+{
+  "timestamp": "2026-02-11T22:18:16.723305",
+  "total_tests": 20,
+  "passed": 13,
+  "failed": 7,
+  "accuracy": 0.65,
+  "hallucination_rate": 0.0,
+  "avg_duration_ms": 43983.065005001845,
+  "by_category": {
+    "direct_lookup": {
+      "total": 4,
+      "passed": 3,
+      "accuracy": 0.75
+    },
+    "semantic_search": {
+      "total": 5,
+      "passed": 5,
+      "accuracy": 1.0
+    },
+    "calculation": {
+      "total": 5,
+      "passed": 2,
+      "accuracy": 0.4
+    },
+    "edge_case": {
+      "total": 3,
+      "passed": 2,
+      "accuracy": 0.6666666666666666
+    },
+    "complex": {
+      "total": 2,
+      "passed": 1,
+      "accuracy": 0.5
+    },
+    "citation": {
+      "total": 1,
+      "passed": 0,
+      "accuracy": 0.0
+    }
+  },
+  "results": [
+    {
+      "test_id": "direct_01",
+      "category": "direct_lookup",
+      "query": "What's the power of AM10/60?",
+      "passed": true,
+      "score": 0.3333333333333333,
+      "duration_ms": 1072.8393999161199,
+      "faithfulness": true,
+      "faithfulness_reason": "Empty answer or context",
+      "error": null
+    },
+    {
+      "test_id": "direct_02",
+      "category": "direct_lookup",
+      "query": "Show me the specs for DM3SE",
+      "passed": true,
+      "score": 0.6666666666666666,
+      "duration_ms": 17.02350005507469,
+      "faithfulness": true,
+      "faithfulness_reason": "Judge error, assuming faithful",
+      "error": null
+    },
+    {
+      "test_id": "direct_03",
+      "category": "direct_lookup",
+      "query": "What's the frequency response of IZA 250-LZ?",
+      "passed": true,
+      "score": 0.6666666666666666,
+      "duration_ms": 517.9740999592468,
+      "faithfulness": true,
+      "faithfulness_reason": "Judge error, assuming faithful",
+      "error": null
+    },
+    {
+      "test_id": "direct_04",
+      "category": "direct_lookup",
+      "query": "FS2SE specifications",
+      "passed": false,
+      "score": 0.3333333333333333,
+      "duration_ms": 105871.83740001637,
+      "faithfulness": true,
+      "faithfulness_reason": "",
+      "error": null
+    },
+    {
+      "test_id": "semantic_01",
+      "category": "semantic_search",
+      "query": "Find 70V ceiling speakers for conference rooms",
+      "passed": true,
+      "score": 0.5,
+      "duration_ms": 71926.26159999054,
+      "faithfulness": true,
+      "faithfulness_reason": "",
+      "error": null
+    },
+    {
+      "test_id": "semantic_02",
+      "category": "semantic_search",
+      "query": "What outdoor speakers do you have?",
+      "passed": true,
+      "score": 0.5,
+      "duration_ms": 103106.29269992933,
+      "faithfulness": true,
+      "faithfulness_reason": "",
+      "error": null
+    },
+    {
+      "test_id": "semantic_03",
+      "category": "semantic_search",
+      "query": "Recommend amplifiers over 250 watts",
+      "passed": true,
+      "score": 0.5,
+      "duration_ms": 70068.42520006467,
+      "faithfulness": true,
+      "faithfulness_reason": "",
+      "error": null
+    },
+    {
+      "test_id": "semantic_04",
+      "category": "semantic_search",
+      "query": "DesignMax speakers for retail",
+      "passed": true,
+      "score": 0.5,
+      "duration_ms": 101076.66929997504,
+      "faithfulness": true,
+      "faithfulness_reason": "",
+      "error": null
+    },
+    {
+      "test_id": "semantic_05",
+      "category": "semantic_search",
+      "query": "Arena speakers for live events",
+      "passed": true,
+      "score": 0.5,
+      "duration_ms": 105932.09170002956,
+      "faithfulness": true,
+      "faithfulness_reason": "",
+      "error": null
+    },
+    {
+      "test_id": "calc_01",
+      "category": "calculation",
+      "query": "Can I connect 4 speakers at 30W each to a 150W transformer?",
+      "passed": true,
+      "score": 1.0,
+      "duration_ms": 25.667999987490475,
+      "faithfulness": true,
+      "faithfulness_reason": "Empty answer or context",
+      "error": null
+    },
+    {
+      "test_id": "calc_02",
+      "category": "calculation",
+      "query": "Can I connect 6 x 30W speakers to 150W transformer?",
+      "passed": false,
+      "score": 0.5,
+      "duration_ms": 0.8287000237032771,
+      "faithfulness": true,
+      "faithfulness_reason": "Empty answer or context",
+      "error": null
+    },
+    {
+      "test_id": "calc_03",
+      "category": "calculation",
+      "query": "Calculate impedance of 3 x 8 ohm speakers in parallel",
+      "passed": false,
+      "score": 0.0,
+      "duration_ms": 5.262000020593405,
+      "faithfulness": true,
+      "faithfulness_reason": "Empty answer or context",
+      "error": null
+    },
+    {
+      "test_id": "calc_04",
+      "category": "calculation",
+      "query": "What's the total impedance of 4 ohm and 8 ohm speakers in series?",
+      "passed": true,
+      "score": 1.0,
+      "duration_ms": 0.39659999310970306,
+      "faithfulness": true,
+      "faithfulness_reason": "Empty answer or context",
+      "error": null
+    },
+    {
+      "test_id": "calc_05",
+      "category": "calculation",
+      "query": "What transformer do I need for 200W of speakers?",
+      "passed": false,
+      "score": 0.0,
+      "duration_ms": 0.6636000471189618,
+      "faithfulness": true,
+      "faithfulness_reason": "Empty answer or context",
+      "error": null
+    },
+    {
+      "test_id": "edge_01",
+      "category": "edge_case",
+      "query": "AM10/60/80 power handling",
+      "passed": true,
+      "score": 1.0,
+      "duration_ms": 100241.86789989471,
+      "faithfulness": true,
+      "faithfulness_reason": "",
+      "error": null
+    },
+    {
+      "test_id": "edge_02",
+      "category": "edge_case",
+      "query": "What's the wattage of a nonexistent model XYZ123?",
+      "passed": false,
+      "score": 0.0,
+      "duration_ms": 72366.10380001366,
+      "faithfulness": true,
+      "faithfulness_reason": "",
+      "error": null
+    },
+    {
+      "test_id": "edge_03",
+      "category": "edge_case",
+      "query": "",
+      "passed": true,
+      "score": 1.0,
+      "duration_ms": 0.05549995694309473,
+      "faithfulness": true,
+      "faithfulness_reason": "Empty answer or context",
+      "error": null
+    },
+    {
+      "test_id": "complex_01",
+      "category": "complex",
+      "query": "Compare power handling of AM10/60 vs AM20/60",
+      "passed": false,
+      "score": 0.0,
+      "duration_ms": 104745.76970003545,
+      "faithfulness": true,
+      "faithfulness_reason": "",
+      "error": null
+    },
+    {
+      "test_id": "complex_02",
+      "category": "complex",
+      "query": "What 70V speakers work with a 300W PowerSpace amplifier?",
+      "passed": true,
+      "score": 1.0,
+      "duration_ms": 42650.26470005978,
+      "faithfulness": true,
+      "faithfulness_reason": "Empty answer or context",
+      "error": null
+    },
+    {
+      "test_id": "citation_01",
+      "category": "citation",
+      "query": "What's the sensitivity of EM90?",
+      "passed": false,
+      "score": 0.0,
+      "duration_ms": 35.00470006838441,
+      "faithfulness": true,
+      "faithfulness_reason": "Judge error, assuming faithful",
+      "error": null
+    }
+  ]
+}

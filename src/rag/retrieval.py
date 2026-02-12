@@ -160,18 +160,18 @@ class HybridRetriever:
             param_idx += 1
         
         if 'voltage_type' in filters:
-            where_clauses.append(f"voltage_type = ${param_idx}")
-            params.append(filters['voltage_type'])
+            where_clauses.append(f"voltage_type ILIKE ${param_idx}")
+            params.append(f"%{filters['voltage_type']}%")
             param_idx += 1
         
         if 'category' in filters:
-            where_clauses.append(f"category = ${param_idx}")
+            where_clauses.append(f"category ILIKE ${param_idx}")
             params.append(filters['category'])
             param_idx += 1
         
         if 'series' in filters:
-            where_clauses.append(f"series = ${param_idx}")
-            params.append(filters['series'])
+            where_clauses.append(f"series ILIKE ${param_idx}")
+            params.append(f"%{filters['series']}%")
             param_idx += 1
         
         where_clause = " AND ".join(where_clauses)
@@ -228,12 +228,12 @@ class HybridRetriever:
             param_idx += 1
         
         if 'voltage_type' in filters:
-            where_clauses.append(f"voltage_type = ${param_idx}")
-            params.append(filters['voltage_type'])
+            where_clauses.append(f"voltage_type ILIKE ${param_idx}")
+            params.append(f"%{filters['voltage_type']}%")
             param_idx += 1
         
         if 'category' in filters:
-            where_clauses.append(f"category = ${param_idx}")
+            where_clauses.append(f"category ILIKE ${param_idx}")
             params.append(filters['category'])
             param_idx += 1
         
