@@ -350,6 +350,11 @@ class ElectricalCalculator:
                     'speakers': params['speakers'],
                 }
             
+            # Transformer recommendation
+            if 'recommend_transformer_for' in params:
+                total_watts = params['recommend_transformer_for']
+                return cls.recommend_transformer(total_watts)
+            
             # Impedance calculation
             if 'impedances' in params and 'connection' in params:
                 result = cls.calculate_impedance(

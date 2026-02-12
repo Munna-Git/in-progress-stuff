@@ -131,24 +131,35 @@ Answer:"""
         citations = []
         specs_lines = []
         
-        # Format key specifications
+        # Map normalized keys AND raw keys to display labels
+        # Format: (source_key, label, unit, normalized_key)
         spec_mappings = [
-            ('power_watts', 'Power', 'W'),
-            ('power_lf_watts', 'Power (LF)', 'W'),
-            ('power_hf_watts', 'Power (HF)', 'W'),
-            ('freq_min_hz', 'Frequency Min', 'Hz'),
-            ('freq_max_hz', 'Frequency Max', 'Hz'),
-            ('impedance_ohms', 'Impedance', 'Ω'),
-            ('sensitivity_db', 'Sensitivity', 'dB'),
-            ('coverage', 'Coverage', ''),
-            ('driver_components', 'Drivers', ''),
-            ('voltage_type', 'Voltage Type', ''),
-            ('weight_kg', 'Weight', 'kg'),
-            ('color_options', 'Colors', ''),
-            ('environmental', 'Environmental', ''),
+            ('power_watts', 'Power', 'W', 'power_watts'),
+            ('Power Handling (Long-term)', 'Power', 'W', 'power_watts'),
+            
+            ('freq_min_hz', 'Freq Min', 'Hz', 'freq_min_hz'),
+            ('freq_max_hz', 'Freq Max', 'Hz', 'freq_max_hz'),
+            ('Freq Response (-3 dB) Freq Range (-10 dB)', 'Freq Response', '', 'freq_response'),
+            
+            ('impedance_ohms', 'Impedance', 'Ω', 'impedance_ohms'),
+            ('Nominal Impedance', 'Impedance', 'Ω', 'impedance_ohms'),
+            
+            ('sensitivity_db', 'Sensitivity', 'dB', 'sensitivity_db'),
+            ('Sensitivity (SPL/1W@1m)', 'Sensitivity', 'dB', 'sensitivity_db'),
+            
+            ('coverage', 'Coverage', '', 'coverage'),
+            ('Coverage (H × V, or Conical) 1 kHz - 4 kHz Average', 'Coverage', '', 'coverage'),
+            
+            ('voltage_type', 'Voltage', '', 'voltage_type'),
+            
+            ('driver_components', 'Drivers', '', 'driver_components'),
+            ('Driver Components', 'Drivers', '', 'driver_components'),
+            ('weight_kg', 'Weight', 'kg', 'weight_kg'),
+            ('color_options', 'Colors', '', 'color_options'),
+            ('environmental', 'Environmental', '', 'environmental'),
         ]
         
-        for key, label, unit in spec_mappings:
+        for key, label, unit, norm_key in spec_mappings:
             if key in specs and specs[key] is not None:
                 value = specs[key]
                 if unit:
@@ -158,7 +169,7 @@ Answer:"""
                 
                 citations.append(Citation(
                     model_name=result.model_name,
-                    field=key,
+                    field=norm_key,
                     value=value,
                     pdf_source=result.pdf_source,
                 ))
@@ -327,6 +338,16 @@ Answer:"""
 - **Total Power**: {calc_result['total_power']} W
 - **Speakers**: {calc_result.get('speakers', [])}"""
         
+        elif 'recommended_watts' in calc_result:
+            # Transformer recommendation
+            answer = f"""**Transformer Recommendation**
+
+- **Speaker Load**: {calc_result.get('load_watts', '?')} W
+- **Recommended Transformer**: {calc_result['recommended_watts']} W
+- **Headroom**: {calc_result.get('headroom_percent', '?')}%
+
+{calc_result.get('message', '')}"""
+        
         else:
             answer = f"Calculation result: {calc_result}"
         
@@ -374,24 +395,30 @@ Answer:"""
             
             specs = result.specs
             spec_mappings = [
-                ('power_watts', 'Power', 'W'),
-                ('freq_min_hz', 'Freq Min', 'Hz'),
-                ('freq_max_hz', 'Freq Max', 'Hz'),
-                ('impedance_ohms', 'Impedance', 'Ω'),
-                ('sensitivity_db', 'Sensitivity', 'dB'),
-                ('coverage', 'Coverage', ''),
-                ('voltage_type', 'Voltage', ''),
-                ('driver_components', 'Drivers', ''),
+                ('power_watts', 'Power', 'W', 'power_watts'),
+                ('Power Handling (Long-term)', 'Power', 'W', 'power_watts'),
+                ('freq_min_hz', 'Freq Min', 'Hz', 'freq_min_hz'),
+                ('freq_max_hz', 'Freq Max', 'Hz', 'freq_max_hz'),
+                ('Freq Response (-3 dB) Freq Range (-10 dB)', 'Freq Response', '', 'freq_response'),
+                ('impedance_ohms', 'Impedance', 'Ω', 'impedance_ohms'),
+                ('Nominal Impedance', 'Impedance', 'Ω', 'impedance_ohms'),
+                ('sensitivity_db', 'Sensitivity', 'dB', 'sensitivity_db'),
+                ('Sensitivity (SPL/1W@1m)', 'Sensitivity', 'dB', 'sensitivity_db'),
+                ('coverage', 'Coverage', '', 'coverage'),
+                ('Coverage (H × V, or Conical) 1 kHz - 4 kHz Average', 'Coverage', '', 'coverage'),
+                ('voltage_type', 'Voltage', '', 'voltage_type'),
+                ('driver_components', 'Drivers', '', 'driver_components'),
+                ('Driver Components', 'Drivers', '', 'driver_components'),
             ]
             
-            for key, label, unit in spec_mappings:
+            for key, label, unit, norm_key in spec_mappings:
                 if key in specs and specs[key] is not None:
                     value = specs[key]
                     suffix = f" {unit}" if unit else ""
                     lines.append(f"- {label}: {value}{suffix}")
                     citations.append(Citation(
                         model_name=result.model_name,
-                        field=key,
+                        field=norm_key,
                         value=value,
                         pdf_source=result.pdf_source,
                     ))

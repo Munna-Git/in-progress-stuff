@@ -361,7 +361,7 @@ Respond with ONLY one word: DIRECT_LOOKUP, SEMANTIC_SEARCH, or CALCULATION"""
         """
         params = {}
         
-        # Extract speaker wattages: "4 speakers at 30W" or "4x30W"
+        # Extract speaker wattages: "4 speakers at 30W" or "4x30W" or "6 x 30W speakers"
         speaker_match = re.search(
             r'(\d+)\s*(?:×|x|speakers?\s*(?:at|@)?)\s*(\d+)\s*W',
             query, re.IGNORECASE
@@ -371,7 +371,7 @@ Respond with ONLY one word: DIRECT_LOOKUP, SEMANTIC_SEARCH, or CALCULATION"""
             watts = int(speaker_match.group(2))
             params['speakers'] = [watts] * count
         
-        # Extract transformer capacity
+        # Extract transformer capacity: "150W transformer" or "transformer ... 150W"
         transformer_match = re.search(
             r'(\d+)\s*W\s*(?:transformer|amp|amplifier)',
             query, re.IGNORECASE
@@ -379,10 +379,26 @@ Respond with ONLY one word: DIRECT_LOOKUP, SEMANTIC_SEARCH, or CALCULATION"""
         if transformer_match:
             params['transformer_watts'] = int(transformer_match.group(1))
         
-        # Extract impedances
-        impedance_match = re.findall(r'(\d+)\s*(?:Ω|ohm)', query, re.IGNORECASE)
-        if impedance_match:
-            params['impedances'] = [float(z) for z in impedance_match]
+        # Transformer recommendation: "What transformer do I need for 200W"
+        if 'transformer' in query.lower() and 'transformer_watts' not in params:
+            watt_match = re.search(r'(\d+)\s*W', query, re.IGNORECASE)
+            if watt_match:
+                params['recommend_transformer_for'] = int(watt_match.group(1))
+        
+        # Extract impedances with multiplier: "3 x 8 ohm" or "3x8Ω"
+        impedance_mult_match = re.search(
+            r'(\d+)\s*(?:×|x)\s*(\d+)\s*(?:Ω|ohm)',
+            query, re.IGNORECASE
+        )
+        if impedance_mult_match:
+            count = int(impedance_mult_match.group(1))
+            ohms = float(impedance_mult_match.group(2))
+            params['impedances'] = [ohms] * count
+        else:
+            # Extract individual impedances: "4 ohm and 8 ohm"
+            impedance_match = re.findall(r'(\d+)\s*(?:Ω|ohm)', query, re.IGNORECASE)
+            if impedance_match:
+                params['impedances'] = [float(z) for z in impedance_match]
         
         # Connection type
         if 'series' in query.lower():

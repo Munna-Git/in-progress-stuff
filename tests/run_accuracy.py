@@ -314,10 +314,15 @@ class AccuracyRunner:
         
         if 'compatible' in expected_result:
             expected_compat = expected_result['compatible']
-            actual_compat = '✅' in answer.answer or 'compatible' in answer_text
-            if not expected_compat:
-                actual_compat = '❌' in answer.answer or 'not compatible' in answer_text
-            checks.append(expected_compat == actual_compat)
+            if expected_compat:
+                # Check for positive compatibility
+                actual_compat = '✅' in answer.answer or (
+                    'compatible' in answer_text and 'incompatible' not in answer_text and 'not compatible' not in answer_text
+                )
+            else:
+                # Check for negative compatibility
+                actual_compat = '❌' in answer.answer or 'not compatible' in answer_text or 'incompatible' in answer_text
+            checks.append(actual_compat)
         
         if 'total_load' in expected_result:
             expected_load = str(expected_result['total_load'])

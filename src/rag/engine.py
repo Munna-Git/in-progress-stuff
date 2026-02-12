@@ -108,8 +108,8 @@ class QueryEngine:
         
         if not result:
             return GeneratedAnswer(
-                answer=f"I couldn't find product '{model_name}' in my database. "
-                       f"Please check the model name or try a search.",
+                answer=f"Product '{model_name}' was not found in my database. "
+                       f"I couldn't find a matching product. Please check the model name or try a search.",
                 query_type="direct_lookup",
                 products_used=[],
             )
