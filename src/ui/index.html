@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bose Product Engine</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">BOSE PROFESSIONAL</div>
+            <div class="subtitle">AI Product Assistant</div>
+        </header>
+
+        <main id="chat-container">
+            <div class="message assistant">
+                <div class="bubble">
+                    <p>Hello. I can help you with Bose Professional product specifications, compatibility checks, and system design.</p>
+                </div>
+            </div>
+        </main>
+
+        <div class="input-area">
+            <form id="chat-form">
+                <input type="text" id="query-input" placeholder="Ask about products, specs, or calculations..." autocomplete="off">
+                <button type="submit">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
